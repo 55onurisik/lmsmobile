@@ -1,41 +1,29 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Button, ActivityIndicator } from 'react-native';
+import { authAPI } from '../api';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState({});
-
-  const validateForm = () => {
-    let newErrors = {};
-    if (!email) newErrors.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Email is invalid';
-    
-    if (!password) newErrors.password = 'Password is required';
-    else if (password.length < 6) newErrors.password = 'Password must be at least 6 characters';
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!validateForm()) return;
-
     try {
-      const response = await axios.post('YOUR_API_BASE_URL/login', {
-        email,
-        password,
-      });
-
-      if (response.data.token) {
-        await AsyncStorage.setItem('token', response.data.token);
-        // Navigate to Home or handle authentication state
-        Alert.alert('Success', 'Login successful!');
-      }
+      setLoading(true);
+      console.log('Login attempt with:', { email, password });
+      
+      await authAPI.login({ email, password });
+      console.log('Login successful, navigating to MainApp');
+      
+      navigation.replace('MainApp');
     } catch (error) {
-      Alert.alert('Error', error.response?.data?.message || 'Login failed');
+      console.log('Login error:', error);
+      Alert.alert(
+        'Giriş Hatası',
+        error.response?.data?.message || 'Giriş başarısız. Lütfen bilgilerinizi kontrol edin.'
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -50,25 +38,29 @@ const LoginScreen = ({ navigation }) => {
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
+        editable={!loading}
       />
-      {errors.email && <Text style={styles.error}>{errors.email}</Text>}
 
       <TextInput
         style={styles.input}
-        placeholder="Password"
+        placeholder="Şifre"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
+        editable={!loading}
       />
-      {errors.password && <Text style={styles.error}>{errors.password}</Text>}
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Login</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-        <Text style={styles.link}>Don't have an account? Register</Text>
-      </TouchableOpacity>
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" />
+      ) : (
+        <>
+          <Button title="Giriş Yap" onPress={handleLogin} />
+          <Button
+            title="Kayıt Ol"
+            onPress={() => navigation.navigate('Register')}
+          />
+        </>
+      )}
     </View>
   );
 };

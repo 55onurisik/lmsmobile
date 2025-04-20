@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Button, ActivityIndicator } from 'react-native';
+import { authAPI } from '../api';
 
 const RegisterScreen = ({ navigation }) => {
   const [name, setName] = useState('');
@@ -9,6 +8,7 @@ const RegisterScreen = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const validateForm = () => {
     let newErrors = {};
@@ -27,22 +27,35 @@ const RegisterScreen = ({ navigation }) => {
   };
 
   const handleRegister = async () => {
-    if (!validateForm()) return;
-
     try {
-      const response = await axios.post('YOUR_API_BASE_URL/register', {
-        name,
-        email,
-        password,
-      });
-
-      if (response.data.token) {
-        await AsyncStorage.setItem('token', response.data.token);
-        // Navigate to Home or handle authentication state
-        Alert.alert('Success', 'Registration successful!');
-      }
+      setLoading(true);
+      console.log('Register attempt with:', { name, email, password });
+      
+      const response = await authAPI.register({ name, email, password });
+      console.log('Register response:', response);
+      
+      navigation.replace('MainApp');
     } catch (error) {
-      Alert.alert('Error', error.response?.data?.message || 'Registration failed');
+      console.log('Register error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      
+      let errorMessage = 'Kayıt başarısız. Lütfen bilgilerinizi kontrol edin.';
+      
+      if (error.response?.data?.errors) {
+        // Laravel validation errors
+        const errors = error.response.data.errors;
+        errorMessage = Object.values(errors).flat().join('\n');
+      } else if (error.response?.data?.message) {
+        // API error message
+        errorMessage = error.response.data.message;
+      }
+      
+      Alert.alert('Kayıt Hatası', errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -52,9 +65,10 @@ const RegisterScreen = ({ navigation }) => {
       
       <TextInput
         style={styles.input}
-        placeholder="Name"
+        placeholder="Ad Soyad"
         value={name}
         onChangeText={setName}
+        editable={!loading}
       />
       {errors.name && <Text style={styles.error}>{errors.name}</Text>}
 
@@ -65,15 +79,17 @@ const RegisterScreen = ({ navigation }) => {
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
+        editable={!loading}
       />
       {errors.email && <Text style={styles.error}>{errors.email}</Text>}
 
       <TextInput
         style={styles.input}
-        placeholder="Password"
+        placeholder="Şifre"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
+        editable={!loading}
       />
       {errors.password && <Text style={styles.error}>{errors.password}</Text>}
 
@@ -83,16 +99,21 @@ const RegisterScreen = ({ navigation }) => {
         value={confirmPassword}
         onChangeText={setConfirmPassword}
         secureTextEntry
+        editable={!loading}
       />
       {errors.confirmPassword && <Text style={styles.error}>{errors.confirmPassword}</Text>}
 
-      <TouchableOpacity style={styles.button} onPress={handleRegister}>
-        <Text style={styles.buttonText}>Register</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-        <Text style={styles.link}>Already have an account? Login</Text>
-      </TouchableOpacity>
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" />
+      ) : (
+        <>
+          <Button title="Kayıt Ol" onPress={handleRegister} />
+          <Button
+            title="Giriş Yap"
+            onPress={() => navigation.navigate('Login')}
+          />
+        </>
+      )}
     </View>
   );
 };
