@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Button, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { authAPI } from '../api';
 
 const LoginScreen = ({ navigation }) => {
@@ -8,20 +8,25 @@ const LoginScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Hata', 'Lütfen e-posta ve şifrenizi girin');
+      return;
+    }
+
     try {
       setLoading(true);
-      console.log('Login attempt with:', { email, password });
+      const response = await authAPI.login({ email, password });
       
-      await authAPI.login({ email, password });
-      console.log('Login successful, navigating to MainApp');
-      
-      navigation.replace('MainApp');
+      if (response.success) {
+        // Başarılı giriş sonrası ana sayfaya yönlendir
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Home' }],
+        });
+      }
     } catch (error) {
-      console.log('Login error:', error);
-      Alert.alert(
-        'Giriş Hatası',
-        error.response?.data?.message || 'Giriş başarısız. Lütfen bilgilerinizi kontrol edin.'
-      );
+      console.error('Login error:', error);
+      Alert.alert('Hata', error.message);
     } finally {
       setLoading(false);
     }
@@ -29,38 +34,41 @@ const LoginScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
+      <Text style={styles.title}>Giriş Yap</Text>
       
       <TextInput
         style={styles.input}
-        placeholder="Email"
+        placeholder="E-posta"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
-        editable={!loading}
       />
-
+      
       <TextInput
         style={styles.input}
         placeholder="Şifre"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
-        editable={!loading}
       />
-
-      {loading ? (
-        <ActivityIndicator size="large" color="#0000ff" />
-      ) : (
-        <>
-          <Button title="Giriş Yap" onPress={handleLogin} />
-          <Button
-            title="Kayıt Ol"
-            onPress={() => navigation.navigate('Register')}
-          />
-        </>
-      )}
+      
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handleLogin}
+        disabled={loading}
+      >
+        <Text style={styles.buttonText}>
+          {loading ? 'Giriş Yapılıyor...' : 'Giriş Yap'}
+        </Text>
+      </TouchableOpacity>
+      
+      <TouchableOpacity
+        style={styles.registerButton}
+        onPress={() => navigation.navigate('Register')}
+      >
+        <Text style={styles.registerText}>Hesabınız yok mu? Kayıt Olun</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -79,17 +87,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   input: {
-    height: 50,
     borderWidth: 1,
     borderColor: '#ddd',
+    padding: 15,
     borderRadius: 8,
-    paddingHorizontal: 15,
-    marginBottom: 10,
+    marginBottom: 15,
     fontSize: 16,
-  },
-  error: {
-    color: 'red',
-    marginBottom: 10,
   },
   button: {
     backgroundColor: '#007AFF',
@@ -103,10 +106,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  link: {
-    color: '#007AFF',
-    textAlign: 'center',
+  registerButton: {
     marginTop: 20,
+    alignItems: 'center',
+  },
+  registerText: {
+    color: '#007AFF',
+    fontSize: 16,
   },
 });
 

@@ -1,59 +1,51 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Button, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { authAPI } from '../api';
 
 const RegisterScreen = ({ navigation }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [errors, setErrors] = useState({});
+  const [passwordConfirmation, setPasswordConfirmation] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const validateForm = () => {
-    let newErrors = {};
-    if (!name) newErrors.name = 'Name is required';
-    
-    if (!email) newErrors.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Email is invalid';
-    
-    if (!password) newErrors.password = 'Password is required';
-    else if (password.length < 6) newErrors.password = 'Password must be at least 6 characters';
-    
-    if (password !== confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
   const handleRegister = async () => {
+    if (!name || !email || !password || !passwordConfirmation) {
+      Alert.alert('Hata', 'Lütfen tüm alanları doldurun');
+      return;
+    }
+
+    if (password !== passwordConfirmation) {
+      Alert.alert('Hata', 'Şifreler eşleşmiyor');
+      return;
+    }
+
+    if (password.length < 8) {
+      Alert.alert('Hata', 'Şifre en az 8 karakter olmalıdır');
+      return;
+    }
+
     try {
       setLoading(true);
-      console.log('Register attempt with:', { name, email, password });
+      const userData = {
+        name: name.trim(),
+        email: email.trim(),
+        password,
+        password_confirmation: passwordConfirmation
+      };
       
-      const response = await authAPI.register({ name, email, password });
-      console.log('Register response:', response);
+      const response = await authAPI.register(userData);
       
-      navigation.replace('MainApp');
-    } catch (error) {
-      console.log('Register error details:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status
-      });
-      
-      let errorMessage = 'Kayıt başarısız. Lütfen bilgilerinizi kontrol edin.';
-      
-      if (error.response?.data?.errors) {
-        // Laravel validation errors
-        const errors = error.response.data.errors;
-        errorMessage = Object.values(errors).flat().join('\n');
-      } else if (error.response?.data?.message) {
-        // API error message
-        errorMessage = error.response.data.message;
+      if (response.success) {
+        Alert.alert('Başarılı', 'Kayıt işlemi tamamlandı', [
+          { text: 'Tamam', onPress: () => navigation.navigate('Login') }
+        ]);
+      } else {
+        Alert.alert('Hata', response.error || 'Kayıt işlemi başarısız');
       }
-      
-      Alert.alert('Kayıt Hatası', errorMessage);
+    } catch (error) {
+      console.error('Register error:', error);
+      Alert.alert('Hata', error.message);
     } finally {
       setLoading(false);
     }
@@ -61,59 +53,57 @@ const RegisterScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Register</Text>
+      <Text style={styles.title}>Kayıt Ol</Text>
       
       <TextInput
         style={styles.input}
         placeholder="Ad Soyad"
         value={name}
         onChangeText={setName}
-        editable={!loading}
+        autoCapitalize="words"
       />
-      {errors.name && <Text style={styles.error}>{errors.name}</Text>}
-
+      
       <TextInput
         style={styles.input}
-        placeholder="Email"
+        placeholder="E-posta"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
-        editable={!loading}
       />
-      {errors.email && <Text style={styles.error}>{errors.email}</Text>}
-
+      
       <TextInput
         style={styles.input}
         placeholder="Şifre"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
-        editable={!loading}
       />
-      {errors.password && <Text style={styles.error}>{errors.password}</Text>}
-
+      
       <TextInput
         style={styles.input}
-        placeholder="Confirm Password"
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
+        placeholder="Şifre Tekrar"
+        value={passwordConfirmation}
+        onChangeText={setPasswordConfirmation}
         secureTextEntry
-        editable={!loading}
       />
-      {errors.confirmPassword && <Text style={styles.error}>{errors.confirmPassword}</Text>}
-
-      {loading ? (
-        <ActivityIndicator size="large" color="#0000ff" />
-      ) : (
-        <>
-          <Button title="Kayıt Ol" onPress={handleRegister} />
-          <Button
-            title="Giriş Yap"
-            onPress={() => navigation.navigate('Login')}
-          />
-        </>
-      )}
+      
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handleRegister}
+        disabled={loading}
+      >
+        <Text style={styles.buttonText}>
+          {loading ? 'Kayıt Yapılıyor...' : 'Kayıt Ol'}
+        </Text>
+      </TouchableOpacity>
+      
+      <TouchableOpacity
+        style={styles.loginButton}
+        onPress={() => navigation.navigate('Login')}
+      >
+        <Text style={styles.loginText}>Zaten hesabınız var mı? Giriş Yapın</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -132,17 +122,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   input: {
-    height: 50,
     borderWidth: 1,
     borderColor: '#ddd',
+    padding: 15,
     borderRadius: 8,
-    paddingHorizontal: 15,
-    marginBottom: 10,
+    marginBottom: 15,
     fontSize: 16,
-  },
-  error: {
-    color: 'red',
-    marginBottom: 10,
   },
   button: {
     backgroundColor: '#007AFF',
@@ -156,10 +141,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  link: {
-    color: '#007AFF',
-    textAlign: 'center',
+  loginButton: {
     marginTop: 20,
+    alignItems: 'center',
+  },
+  loginText: {
+    color: '#007AFF',
+    fontSize: 16,
   },
 });
 
