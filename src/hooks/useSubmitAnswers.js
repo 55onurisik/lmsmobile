@@ -1,19 +1,39 @@
 import { useState } from 'react';
-import client from '../api/client';
+import { submitAnswers } from '../api/studentAPI';
 
 export const useSubmitAnswers = (examId) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const submit = async (answers) => {
+  const submit = async (answersArray) => {
     try {
       setLoading(true);
       setError(null);
-      await client.post(`/exams/${examId}/submit`, { answers });
-      return { success: true };
+
+      // Convert array format to object format
+      const answersObj = answersArray.reduce((obj, item) => {
+        obj[item.question_id] = item.selected_answer;
+        return obj;
+      }, {});
+
+      console.log('Submitting answers:', answersObj);
+      
+      const response = await submitAnswers(examId, answersObj);
+      console.log('Submit response:', response.data);
+
+      if (response.data.status === 'success') {
+        return { success: true };
+      } else {
+        throw new Error(response.data.message || 'Cevaplar kaydedilirken bir hata oluştu.');
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Cevaplar kaydedilirken bir hata oluştu.');
-      return { success: false, error: err.response?.data?.message };
+      console.error('Submit error:', err);
+      const errorMessage = err.response?.data?.message || err.message || 'Cevaplar kaydedilirken bir hata oluştu.';
+      setError(errorMessage);
+      return { 
+        success: false, 
+        error: errorMessage
+      };
     } finally {
       setLoading(false);
     }

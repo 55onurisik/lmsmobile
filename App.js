@@ -13,36 +13,26 @@ const Stack = createNativeStackNavigator();
 const Navigation = () => {
   const { isAuthenticated, loading } = useAuth();
 
+  console.log('Navigation state:', { isAuthenticated, loading });
+
   if (loading) {
-    return null; // veya bir loading spinner
+    return null;
   }
 
   return (
     <Stack.Navigator>
       {!isAuthenticated ? (
-        <Stack.Screen
-          name="Login"
+        <Stack.Screen 
+          name="Login" 
           component={LoginScreen}
           options={{ headerShown: false }}
         />
       ) : (
-        <>
-          <Stack.Screen
-            name="Dashboard"
-            component={DashboardScreen}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="Answer"
-            component={AnswerScreen}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="Review"
-            component={ReviewScreen}
-            options={{ headerShown: false }}
-          />
-        </>
+        <Stack.Group screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Dashboard" component={DashboardScreen} />
+          <Stack.Screen name="Answer" component={AnswerScreen} />
+          <Stack.Screen name="Review" component={ReviewScreen} />
+        </Stack.Group>
       )}
     </Stack.Navigator>
   );

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import client from '../api/client';
 
 export const useDashboard = () => {
@@ -6,22 +6,34 @@ export const useDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchExams = async () => {
-      try {
-        setLoading(true);
-        const response = await client.get('/dashboard');
+  const fetchExams = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await client.get('/dashboard');
+      console.log('Dashboard response:', response.data);
+      
+      if (response.data.status === 'success') {
         setExams(response.data.data);
-        setError(null);
-      } catch (err) {
-        setError(err.response?.data?.message || 'Sınavlar yüklenirken bir hata oluştu.');
-      } finally {
-        setLoading(false);
+      } else {
+        throw new Error(response.data.message || 'Veri alınamadı');
       }
-    };
-
-    fetchExams();
+    } catch (err) {
+      console.error('Dashboard error:', err);
+      setError(err.response?.data?.message || 'Sınavlar yüklenirken bir hata oluştu.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  return { exams, loading, error };
+  useEffect(() => {
+    fetchExams();
+  }, [fetchExams]);
+
+  const refreshExams = useCallback(() => {
+    fetchExams();
+  }, [fetchExams]);
+
+  return { exams, loading, error, refreshExams };
 }; 

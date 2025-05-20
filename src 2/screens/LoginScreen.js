@@ -1,51 +1,29 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
-import { useAuth } from '../contexts/AuthContext';
-import client from '../api/client';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { authAPI } from '../api';
 
-const LoginScreen = () => {
+const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Hata', 'Lütfen email ve şifre alanlarını doldurun');
+      Alert.alert('Hata', 'Lütfen e-posta ve şifrenizi girin');
       return;
     }
 
     try {
       setLoading(true);
-      console.log('Login attempt...');
+      const response = await authAPI.login({ email, password });
       
-      const response = await client.post('/login', {
-        email,
-        password,
-      });
-
-      console.log('Login response:', response.data);
-
-      if (response.data.status === 'success' && response.data.data?.token) {
-        const token = response.data.data.token;
-        await login(token);
-      } else {
-        throw new Error(response.data.message || 'Giriş başarısız');
+      if (response.success) {
+        // Başarılı giriş sonrası ana sayfaya yönlendir
+        navigation.navigate('Home');
       }
     } catch (error) {
       console.error('Login error:', error);
-      Alert.alert(
-        'Giriş Hatası',
-        error.response?.data?.message || error.message || 'Giriş yapılırken bir hata oluştu. Lütfen tekrar deneyin.'
-      );
+      Alert.alert('Hata', error.message);
     } finally {
       setLoading(false);
     }
@@ -53,7 +31,7 @@ const LoginScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Öğrenci Girişi</Text>
+      <Text style={styles.title}>Giriş Yap</Text>
       
       <TextInput
         style={styles.input}
@@ -62,7 +40,6 @@ const LoginScreen = () => {
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
-        editable={!loading}
       />
       
       <TextInput
@@ -71,19 +48,23 @@ const LoginScreen = () => {
         value={password}
         onChangeText={setPassword}
         secureTextEntry
-        editable={!loading}
       />
       
-      <TouchableOpacity 
-        style={[styles.button, loading && styles.buttonDisabled]} 
+      <TouchableOpacity
+        style={styles.button}
         onPress={handleLogin}
         disabled={loading}
       >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Giriş Yap</Text>
-        )}
+        <Text style={styles.buttonText}>
+          {loading ? 'Giriş Yapılıyor...' : 'Giriş Yap'}
+        </Text>
+      </TouchableOpacity>
+      
+      <TouchableOpacity
+        style={styles.registerButton}
+        onPress={() => navigation.navigate('Register')}
+      >
+        <Text style={styles.registerText}>Hesabınız yok mu? Kayıt Olun</Text>
       </TouchableOpacity>
     </View>
   );
@@ -106,22 +87,29 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
     padding: 15,
+    borderRadius: 8,
     marginBottom: 15,
-    borderRadius: 5,
+    fontSize: 16,
   },
   button: {
     backgroundColor: '#007AFF',
     padding: 15,
-    borderRadius: 5,
+    borderRadius: 8,
     alignItems: 'center',
-  },
-  buttonDisabled: {
-    opacity: 0.7,
+    marginTop: 20,
   },
   buttonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  registerButton: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  registerText: {
+    color: '#007AFF',
+    fontSize: 16,
   },
 });
 

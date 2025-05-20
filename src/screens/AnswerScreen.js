@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -14,140 +14,197 @@ import { useSubmitAnswers } from '../hooks/useSubmitAnswers';
 
 const AnswerScreen = ({ route, navigation }) => {
   const { examId } = route.params;
-  const { exam, questions, loading, error } = useExamQuestions(examId);
-  const { submit, loading: submitting } = useSubmitAnswers(examId);
+  const { exam, loading: questionsLoading, error: questionsError } = useExamQuestions(examId);
+  const { submit, loading: submitLoading, error: submitError } = useSubmitAnswers(examId);
   const [answers, setAnswers] = useState({});
 
-  const handleAnswer = (questionId, answer) => {
+  const handleAnswer = useCallback((questionId, answer) => {
     setAnswers(prev => ({
       ...prev,
-      [questionId]: answer,
+      [questionId]: answer
     }));
-  };
+  }, []);
 
-  const handleSubmit = async () => {
-    const result = await submit(answers);
-    if (result.success) {
-      navigation.replace('Review', { examId, broadcast: 'no' });
-    } else {
-      Alert.alert('Hata', result.error);
+  const handleSubmit = useCallback(async () => {
+    if (!exam?.questions) {
+      Alert.alert('Hata', 'Sınav soruları yüklenemedi.');
+      return;
     }
-  };
 
-  if (loading) {
+    try {
+      // Check if all questions are answered
+      const unansweredQuestions = exam.questions.filter(q => !answers[q.id]);
+      if (unansweredQuestions.length > 0) {
+        Alert.alert(
+          'Eksik Cevaplar',
+          'Lütfen tüm soruları cevaplayın.',
+          [{ text: 'Tamam' }]
+        );
+        return;
+      }
+
+      // Convert answers to array format
+      const answersArray = Object.entries(answers).map(([questionId, answer]) => ({
+        question_id: parseInt(questionId),
+        selected_answer: answer.toUpperCase()
+      }));
+
+      const result = await submit(answersArray);
+      
+      if (result.success) {
+        Alert.alert(
+          'Başarılı',
+          'Cevaplarınız başarıyla kaydedildi.',
+          [
+            {
+              text: 'Tamam',
+              onPress: () => navigation.navigate('Dashboard')
+            }
+          ]
+        );
+      } else {
+        Alert.alert('Hata', result.error || 'Cevaplar kaydedilirken bir hata oluştu.');
+      }
+    } catch (error) {
+      console.error('Submit error:', error);
+      Alert.alert('Hata', 'Cevaplar kaydedilirken bir hata oluştu.');
+    }
+  }, [answers, exam, submit, navigation]);
+
+  if (questionsLoading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color="#0000ff" />
       </View>
     );
   }
 
-  if (error) {
+  if (questionsError) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.errorText}>{error}</Text>
+        <Text style={styles.errorText}>{questionsError}</Text>
+      </View>
+    );
+  }
+
+  if (!exam || !exam.questions) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorText}>Sınav bulunamadı veya sorular yüklenemedi.</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{exam?.title}</Text>
-      </View>
-
-      <ScrollView style={styles.content}>
-        {questions.map((question) => (
-          <View key={question.id} style={styles.questionContainer}>
-            <Text style={styles.questionNumber}>
-              {question.id}. Soru
-            </Text>
-            <Text style={styles.questionText}>{question.question_text}</Text>
-            
-            <RadioButton.Group
-              onValueChange={(value) => handleAnswer(question.id, value)}
-              value={answers[question.id] || ''}
-            >
-              {['A', 'B', 'C', 'D', 'E'].map((option) => (
-                <View key={option} style={styles.optionContainer}>
-                  <RadioButton value={option.toLowerCase()} />
-                  <Text style={styles.optionText}>{option}</Text>
-                </View>
-              ))}
-            </RadioButton.Group>
+    <ScrollView style={styles.container}>
+      <Text style={styles.title}>{exam.title}</Text>
+      
+      {exam.questions.map((question, index) => (
+        <View key={question.id} style={styles.questionContainer}>
+          <Text style={styles.questionText}>
+            {index + 1}. {question.question_text}
+          </Text>
+          
+          <View style={styles.optionsContainer}>
+            {['A', 'B', 'C', 'D'].map((option) => (
+              <TouchableOpacity
+                key={option}
+                style={[
+                  styles.optionButton,
+                  answers[question.id] === option && styles.selectedOption
+                ]}
+                onPress={() => handleAnswer(question.id, option)}
+              >
+                <Text style={[
+                  styles.optionText,
+                  answers[question.id] === option && styles.selectedOptionText
+                ]}>
+                  {option}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
-        ))}
-      </ScrollView>
+        </View>
+      ))}
 
       <TouchableOpacity
-        style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
+        style={[styles.submitButton, submitLoading && styles.disabledButton]}
         onPress={handleSubmit}
-        disabled={submitting}
+        disabled={submitLoading}
       >
-        {submitting ? (
+        {submitLoading ? (
           <ActivityIndicator color="#fff" />
         ) : (
           <Text style={styles.submitButtonText}>Sınavı Tamamla</Text>
         )}
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: 16,
     backgroundColor: '#fff',
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  header: {
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    padding: 16,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-  },
-  content: {
-    flex: 1,
+    marginBottom: 20,
+    textAlign: 'center',
   },
   questionContainer: {
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  questionNumber: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 24,
+    padding: 16,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
   },
   questionText: {
     fontSize: 16,
-    marginBottom: 15,
+    marginBottom: 16,
   },
-  optionContainer: {
+  optionsContainer: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+  },
+  optionButton: {
+    width: '23%',
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#dee2e6',
     alignItems: 'center',
-    marginVertical: 5,
+  },
+  selectedOption: {
+    backgroundColor: '#007bff',
+    borderColor: '#007bff',
   },
   optionText: {
     fontSize: 16,
-    marginLeft: 10,
+    color: '#212529',
+  },
+  selectedOptionText: {
+    color: '#fff',
   },
   submitButton: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    margin: 20,
-    borderRadius: 10,
+    backgroundColor: '#28a745',
+    padding: 16,
+    borderRadius: 8,
     alignItems: 'center',
+    marginTop: 24,
+    marginBottom: 32,
   },
-  submitButtonDisabled: {
-    opacity: 0.7,
+  disabledButton: {
+    backgroundColor: '#6c757d',
   },
   submitButtonText: {
     color: '#fff',
@@ -155,7 +212,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   errorText: {
-    color: 'red',
+    color: '#dc3545',
     fontSize: 16,
     textAlign: 'center',
   },
