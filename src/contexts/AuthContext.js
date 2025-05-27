@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logout as apiLogout } from '../api/studentAPI';
 
 const AuthContext = createContext();
 
@@ -39,11 +40,12 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
+      await apiLogout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
       await AsyncStorage.removeItem('token');
       setIsAuthenticated(false);
-    } catch (error) {
-      console.error('Logout sırasında hata:', error);
-      throw error;
     }
   };
 

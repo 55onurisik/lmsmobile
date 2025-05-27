@@ -10,8 +10,10 @@ import {
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import client from '../api/client';
+import { useNavigation } from '@react-navigation/native';
 
 const LoginScreen = () => {
+  const navigation = useNavigation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -85,6 +87,15 @@ const LoginScreen = () => {
           <Text style={styles.buttonText}>Giriş Yap</Text>
         )}
       </TouchableOpacity>
+
+      <TouchableOpacity 
+        style={styles.registerLink}
+        onPress={() => navigation.navigate('Register')}
+      >
+        <Text style={styles.registerLinkText}>
+          Hesabınız yok mu? Kayıt olun
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -122,6 +133,14 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  registerLink: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  registerLinkText: {
+    color: '#007AFF',
+    fontSize: 16,
   },
 });
 

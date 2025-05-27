@@ -106,7 +106,7 @@ const AnswerScreen = ({ route, navigation }) => {
           </Text>
           
           <View style={styles.optionsContainer}>
-            {['A', 'B', 'C', 'D'].map((option) => (
+            {['A', 'B', 'C', 'D', 'E'].map((option) => (
               <TouchableOpacity
                 key={option}
                 style={[
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   optionButton: {
-    width: '23%',
+    width: '18%',
     padding: 12,
     borderRadius: 8,
     backgroundColor: '#fff',

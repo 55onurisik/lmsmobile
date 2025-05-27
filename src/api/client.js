@@ -2,7 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Get the base URL from environment or use a default
-const BASE_URL = 'https://845e-88-229-204-208.ngrok-free.app/api/studentAPI';
+const BASE_URL = 'https://69df-88-236-121-197.ngrok-free.app/api/studentAPI';
 
 const client = axios.create({
   baseURL: BASE_URL,
@@ -56,8 +56,12 @@ client.interceptors.response.use(
     console.error('Response error:', error.response?.status, error.response?.data);
 
     if (error.response?.status === 401) {
-      console.log('Unauthorized, removing token');
-      await AsyncStorage.removeItem('token');
+      // Chat endpoint'leri için token'ı silme
+      const isChatEndpoint = error.config.url.includes('/chat');
+      if (!isChatEndpoint) {
+        console.log('Unauthorized, removing token');
+        await AsyncStorage.removeItem('token');
+      }
       return Promise.reject(new Error('Oturumunuz sona erdi. Lütfen tekrar giriş yapın.'));
     }
 

@@ -1,32 +1,45 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
+  Image,
+  Modal,
+  Dimensions
 } from 'react-native';
 import { useReview } from '../hooks/useReview';
+import Spinner from '../components/Spinner';
+import ErrorAlert from '../components/ErrorAlert';
 
 const ReviewScreen = ({ route, navigation }) => {
   const { examId, broadcast } = route.params;
   const { exam, studentAnswers, loading, error } = useReview(examId, broadcast);
+  const [expandedAnswers, setExpandedAnswers] = useState(new Set());
+  const [selectedImage, setSelectedImage] = useState(null);
+
+  const toggleAnswer = (answerId) => {
+    setExpandedAnswers(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(answerId)) {
+        newSet.delete(answerId);
+      } else {
+        newSet.add(answerId);
+      }
+      return newSet;
+    });
+  };
 
   if (loading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#007AFF" />
-      </View>
-    );
+    return <Spinner />;
   }
 
   if (error) {
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.errorText}>{error}</Text>
-      </View>
-    );
+    return <ErrorAlert 
+      message={error.response?.data?.message || error.message || 'Değerlendirme yüklenirken bir hata oluştu.'} 
+      onRetry={() => navigation.goBack()}
+    />;
   }
 
   const toggleBroadcast = () => {
@@ -39,11 +52,7 @@ const ReviewScreen = ({ route, navigation }) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>{exam?.title}</Text>
-        <TouchableOpacity onPress={toggleBroadcast} style={styles.toggleButton}>
-          <Text style={styles.toggleText}>
-            {broadcast === 'yes' ? 'Yorumları Gizle' : 'Yorumları Göster'}
-          </Text>
-        </TouchableOpacity>
+        <Text style={styles.subtitle}>Yorumlar</Text>
       </View>
 
       <ScrollView style={styles.content}>
@@ -68,10 +77,34 @@ const ReviewScreen = ({ route, navigation }) => {
                 Cevabınız: {answer.students_answer.toUpperCase()}
               </Text>
               
-              {broadcast === 'yes' && answer.review_text && (
+              <TouchableOpacity 
+                style={styles.reviewButton}
+                onPress={() => toggleAnswer(answer.answer_id)}
+              >
+                <Text style={styles.reviewButtonText}>
+                  {expandedAnswers.has(answer.answer_id) ? 'İncelemeyi Gizle' : 'İncelemeyi Gör'}
+                </Text>
+              </TouchableOpacity>
+
+              {expandedAnswers.has(answer.answer_id) && (
                 <View style={styles.reviewContainer}>
                   <Text style={styles.reviewLabel}>Yorum:</Text>
                   <Text style={styles.reviewText}>{answer.review_text}</Text>
+                  {answer.review_media && (
+                    <>
+                      <TouchableOpacity 
+                        style={styles.viewImageButton}
+                        onPress={() => setSelectedImage(answer.review_media)}
+                      >
+                        <Text style={styles.viewImageButtonText}>Resmi Görüntüle</Text>
+                      </TouchableOpacity>
+                      <Image
+                        source={{ uri: answer.review_media }}
+                        style={styles.reviewImage}
+                        resizeMode="contain"
+                      />
+                    </>
+                  )}
                 </View>
               )}
             </View>
@@ -85,6 +118,26 @@ const ReviewScreen = ({ route, navigation }) => {
       >
         <Text style={styles.backButtonText}>Sınavlara Dön</Text>
       </TouchableOpacity>
+
+      <Modal
+        visible={!!selectedImage}
+        transparent={true}
+        onRequestClose={() => setSelectedImage(null)}
+      >
+        <View style={styles.modalContainer}>
+          <TouchableOpacity 
+            style={styles.modalCloseButton}
+            onPress={() => setSelectedImage(null)}
+          >
+            <Text style={styles.modalCloseButtonText}>Kapat</Text>
+          </TouchableOpacity>
+          <Image
+            source={{ uri: selectedImage }}
+            style={styles.modalImage}
+            resizeMode="contain"
+          />
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -93,11 +146,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   header: {
     padding: 20,
@@ -109,12 +157,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 10,
   },
-  toggleButton: {
-    padding: 10,
-  },
-  toggleText: {
-    color: '#007AFF',
-    fontSize: 16,
+  subtitle: {
+    fontSize: 18,
+    color: '#666',
+    fontWeight: 'bold',
   },
   content: {
     flex: 1,
@@ -151,22 +197,56 @@ const styles = StyleSheet.create({
   },
   answerText: {
     fontSize: 16,
+    marginBottom: 15,
+  },
+  reviewButton: {
+    backgroundColor: '#007AFF',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
     marginBottom: 10,
+  },
+  reviewButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   reviewContainer: {
     marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
+    padding: 15,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
   },
   reviewLabel: {
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 5,
+    color: '#333',
   },
   reviewText: {
     fontSize: 16,
     color: '#666',
+    lineHeight: 22,
+  },
+  viewImageButton: {
+    backgroundColor: '#4CAF50',
+    padding: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  viewImageButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  reviewImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 8,
+    marginTop: 10,
   },
   backButton: {
     backgroundColor: '#007AFF',
@@ -180,10 +260,29 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  errorText: {
-    color: 'red',
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalImage: {
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height * 0.8,
+  },
+  modalCloseButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    padding: 10,
+    borderRadius: 20,
+    zIndex: 1,
+  },
+  modalCloseButtonText: {
+    color: '#fff',
     fontSize: 16,
-    textAlign: 'center',
+    fontWeight: '600',
   },
 });
 

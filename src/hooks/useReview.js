@@ -1,31 +1,28 @@
 import { useState, useEffect } from 'react';
-import client from '../api/client';
+import { getReview } from '../api/studentAPI';
 
-export const useReview = (examId, broadcast = 'no') => {
-  const [studentAnswers, setStudentAnswers] = useState([]);
-  const [exam, setExam] = useState(null);
-  const [loading, setLoading] = useState(true);
+export function useReview(examId, broadcast = false) {
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [studentAnswers, setAnswers] = useState([]);
+  const [exam, setExam] = useState(null);
 
   useEffect(() => {
-    const fetchReview = async () => {
+    async function fetchReview() {
+      setLoading(true);
+      setError(null);
       try {
-        setLoading(true);
-        const response = await client.get(`/exams/${examId}/review?broadcast=${broadcast}`);
-        setExam(response.data.exam);
-        setStudentAnswers(response.data.studentAnswers);
-        setError(null);
+        const { data } = await getReview(examId, broadcast);
+        setAnswers(data.studentAnswers);
+        setExam(data.exam);
       } catch (err) {
-        setError(err.response?.data?.message || 'Değerlendirme yüklenirken bir hata oluştu.');
+        setError(err);
       } finally {
         setLoading(false);
       }
-    };
-
-    if (examId) {
-      fetchReview();
     }
+    fetchReview();
   }, [examId, broadcast]);
 
-  return { exam, studentAnswers, loading, error };
-}; 
+  return { studentAnswers, exam, loading, error };
+} 
