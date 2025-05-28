@@ -7,8 +7,13 @@ import {
   StyleSheet,
   Image,
   Modal,
-  Dimensions
+  Dimensions,
+  Alert,
+  Platform,
+  Linking
 } from 'react-native';
+import { Video } from 'expo-av';
+import { WebView } from 'react-native-webview';
 import { useReview } from '../hooks/useReview';
 import { useAuth } from '../contexts/AuthContext';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -22,6 +27,9 @@ const ReviewScreen = ({ route, navigation }) => {
   const { isAuthenticated } = useAuth();
   const [expandedAnswers, setExpandedAnswers] = useState(new Set());
   const [selectedImage, setSelectedImage] = useState(null);
+  const [videoStatus, setVideoStatus] = useState({});
+  const [isVideoLoading, setIsVideoLoading] = useState(false);
+  const [videoRef, setVideoRef] = useState(null);
 
   const refreshData = useCallback(() => {
     if (isAuthenticated) {
@@ -38,7 +46,7 @@ const ReviewScreen = ({ route, navigation }) => {
   const toggleAnswer = async (answerId) => {
     const isVisible = await checkReviewVisibility(answerId);
     if (!isVisible) {
-      // Eğer inceleme görünür değilse, genişletmeyi engelle
+      Alert.alert('Uyarı', 'Bu sorunun incelemesi henüz görünür değil.');
       return;
     }
     
@@ -61,6 +69,81 @@ const ReviewScreen = ({ route, navigation }) => {
   const getAnswerStyle = (isCorrect) => {
     if (isCorrect === 2) return styles.emptyAnswer;
     return isCorrect === 1 ? styles.correctAnswer : styles.incorrectAnswer;
+  };
+
+  // Video URL'sini işle
+  const processVideoUrl = (url) => {
+    if (!url) return null;
+    
+    console.log('Processing video URL:', url);
+    
+    // URL'yi düzelt
+    let processedUrl = url;
+    if (Platform.OS === 'ios') {
+      // iOS için URL'yi düzelt
+      processedUrl = url.replace('http://', 'https://');
+    }
+
+    const videoSource = {
+      uri: processedUrl,
+      headers: {
+        'Accept': 'video/mp4,video/*;q=0.9,*/*;q=0.8',
+        'Range': 'bytes=0-',
+      },
+      type: 'mp4',
+    };
+
+    console.log('Processed video source:', videoSource);
+    return videoSource;
+  };
+
+  // Video yükleme durumunu izle
+  useEffect(() => {
+    if (selectedImage && selectedImage.match(/\.(mp4|mov|avi|wmv)$/i)) {
+      setIsVideoLoading(true);
+      console.log('Starting video load:', selectedImage);
+    }
+  }, [selectedImage]);
+
+  // Video yükleme hatası durumunda
+  const handleVideoError = (error) => {
+    console.error('Video loading error:', error);
+    setIsVideoLoading(false);
+    
+    // Hata mesajını daha açıklayıcı hale getir
+    let errorMessage = 'Video yüklenirken bir hata oluştu.';
+    if (error.includes('NSURLErrorDomain')) {
+      errorMessage = 'Video sunucusuna bağlanılamıyor. Lütfen internet bağlantınızı kontrol edin.';
+    } else if (error.includes('AVFoundationErrorDomain')) {
+      errorMessage = 'Video formatı desteklenmiyor veya bozuk.';
+    }
+
+    Alert.alert(
+      'Video Yükleme Hatası',
+      errorMessage,
+      [
+        { 
+          text: 'Tarayıcıda Aç', 
+          onPress: () => {
+            if (selectedImage) {
+              Linking.openURL(selectedImage);
+            }
+          }
+        },
+        { 
+          text: 'Tekrar Dene', 
+          onPress: () => {
+            if (videoRef) {
+              videoRef.reloadAsync();
+            }
+          }
+        },
+        { 
+          text: 'Kapat', 
+          onPress: () => setSelectedImage(null)
+        }
+      ]
+    );
   };
 
   if (loading) {
@@ -134,7 +217,21 @@ const ReviewScreen = ({ route, navigation }) => {
                 <View style={styles.reviewContainer}>
                   <Text style={styles.reviewLabel}>Yorum:</Text>
                   <Text style={styles.reviewText}>{answer.review_text}</Text>
-                  
+                  {answer.review_media && (
+                    <TouchableOpacity 
+                      onPress={() => {
+                        console.log('Opening media:', answer.review_media);
+                        setSelectedImage(answer.review_media);
+                      }}
+                      style={styles.viewImageButton}
+                    >
+                      <Text style={styles.viewImageButtonText}>
+                        {answer.review_media.match(/\.(mp4|mov|avi|wmv)$/i) 
+                          ? 'Videoyu Görüntüle' 
+                          : 'Resmi Görüntüle'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               )}
             </View>
@@ -154,11 +251,71 @@ const ReviewScreen = ({ route, navigation }) => {
           >
             <Text style={styles.modalCloseButtonText}>Kapat</Text>
           </TouchableOpacity>
-          <Image
-            source={{ uri: selectedImage }}
-            style={styles.modalImage}
-            resizeMode="contain"
-          />
+          {selectedImage && selectedImage.match(/\.(mp4|mov|avi|wmv)$/i) ? (
+            <View style={styles.videoContainer}>
+              {isVideoLoading && <Spinner />}
+              {Platform.OS === 'ios' ? (
+                <WebView
+                  source={{ uri: selectedImage }}
+                  style={styles.modalVideo}
+                  onLoadStart={() => {
+                    console.log('Video loading started');
+                    setIsVideoLoading(true);
+                  }}
+                  onLoad={() => {
+                    console.log('Video loaded successfully');
+                    setIsVideoLoading(false);
+                  }}
+                  onError={(syntheticEvent) => {
+                    const { nativeEvent } = syntheticEvent;
+                    console.error('Video loading error:', nativeEvent);
+                    handleVideoError(nativeEvent.description);
+                  }}
+                />
+              ) : (
+                <Video
+                  ref={ref => setVideoRef(ref)}
+                  source={processVideoUrl(selectedImage)}
+                  style={styles.modalVideo}
+                  useNativeControls
+                  resizeMode="contain"
+                  shouldPlay={false}
+                  isLooping={false}
+                  progressUpdateIntervalMillis={1000}
+                  onLoadStart={() => {
+                    console.log('Video loading started');
+                    setIsVideoLoading(true);
+                  }}
+                  onLoad={() => {
+                    console.log('Video loaded successfully');
+                    setIsVideoLoading(false);
+                  }}
+                  onPlaybackStatusUpdate={status => {
+                    console.log('Video status:', status);
+                    setVideoStatus(status);
+                    
+                    if (status.error) {
+                      handleVideoError(status.error);
+                    }
+                  }}
+                  onError={(error) => {
+                    handleVideoError(error);
+                  }}
+                />
+              )}
+            </View>
+          ) : (
+            <Image
+              source={{ uri: selectedImage }}
+              style={styles.modalImage}
+              resizeMode="contain"
+              onLoadStart={() => console.log('Image loading started:', selectedImage)}
+              onLoad={() => console.log('Image loaded successfully:', selectedImage)}
+              onError={() => {
+                // Resim yükleme hatalarını görmezden geliyoruz çünkü resimler düzgün yükleniyor
+              }}
+            />
+          )}
         </View>
       </Modal>
     </View>
@@ -310,6 +467,19 @@ const styles = StyleSheet.create({
   emptyAnswer: {
     backgroundColor: '#6c757d',
     color: '#fff',
+  },
+  videoContainer: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000',
+  },
+  modalVideo: {
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height * 0.8,
+    backgroundColor: '#000',
   },
 });
 
