@@ -14,6 +14,7 @@ import { BarChart, PieChart } from 'react-native-chart-kit';
 import client from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useFocusEffect } from '@react-navigation/native';
 
 const StatisticsScreen = ({ navigation }) => {
   const [exams, setExams] = useState([]);
@@ -38,9 +39,13 @@ const StatisticsScreen = ({ navigation }) => {
     }
   };
 
-  useEffect(() => {
-    if (isAuthenticated) fetchData();
-  }, [isAuthenticated]);
+  useFocusEffect(
+    React.useCallback(() => {
+      if (isAuthenticated) {
+        fetchData();
+      }
+    }, [isAuthenticated])
+  );
 
   React.useLayoutEffect(() => {
     navigation.setOptions({

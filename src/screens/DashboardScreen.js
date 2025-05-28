@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,15 +9,29 @@ import {
   Alert,
   Platform,
   ScrollView,
+  RefreshControl,
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { useDashboard } from '../hooks/useDashboard';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 const DashboardScreen = ({ navigation }) => {
   const { logout } = useAuth();
-  const { exams, loading, error, student } = useDashboard();
+  const { exams, loading, error, student, refreshExams } = useDashboard();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await refreshExams();
+    setRefreshing(false);
+  }, [refreshExams]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      refreshExams();
+    }, [refreshExams])
+  );
 
   const handleLogout = async () => {
     try {
@@ -135,9 +149,17 @@ const DashboardScreen = ({ navigation }) => {
         <Text style={styles.headerText}>Dashboard</Text>
       </View>
 
-      
-
-      <ScrollView style={styles.content}>
+      <ScrollView 
+        style={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#007AFF']}
+            tintColor="#007AFF"
+          />
+        }
+      >
         {renderStudentCard()}
         
         <View style={styles.examSection}>

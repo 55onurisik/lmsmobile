@@ -11,6 +11,7 @@ import {
 import client from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useFocusEffect } from '@react-navigation/native';
 
 const ExamList = ({ navigation }) => {
   const [exams, setExams] = useState([]);
@@ -32,9 +33,13 @@ const ExamList = ({ navigation }) => {
     }
   };
 
-  useEffect(() => {
-    if (isAuthenticated) fetchExams();
-  }, [isAuthenticated]);
+  useFocusEffect(
+    React.useCallback(() => {
+      if (isAuthenticated) {
+        fetchExams();
+      }
+    }, [isAuthenticated])
+  );
 
   const renderExamItem = ({ item }) => (
     <TouchableOpacity

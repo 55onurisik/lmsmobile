@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,12 +10,15 @@ import {
   Dimensions
 } from 'react-native';
 import { useReview } from '../hooks/useReview';
+import { useAuth } from '../contexts/AuthContext';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import Spinner from '../components/Spinner';
 import ErrorAlert from '../components/ErrorAlert';
 
 const ReviewScreen = ({ route, navigation }) => {
   const { examId, broadcast } = route.params;
   const { exam, studentAnswers, loading, error } = useReview(examId, broadcast);
+  const { isAuthenticated } = useAuth();
   const [expandedAnswers, setExpandedAnswers] = useState(new Set());
   const [selectedImage, setSelectedImage] = useState(null);
 
@@ -67,9 +70,14 @@ const ReviewScreen = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{exam?.title}</Text>
-        <Text style={styles.subtitle}>Yorumlar</Text>
+      <View style={styles.headerBar}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.navigate('Dashboard')}
+        >
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerText}>Sınav İnceleme</Text>
       </View>
 
       <ScrollView style={styles.content}>
@@ -115,13 +123,6 @@ const ReviewScreen = ({ route, navigation }) => {
         ))}
       </ScrollView>
 
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => navigation.navigate('Dashboard')}
-      >
-        <Text style={styles.backButtonText}>Sınavlara Dön</Text>
-      </TouchableOpacity>
-
       <Modal
         visible={!!selectedImage}
         transparent={true}
@@ -148,21 +149,23 @@ const ReviewScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f5f5',
   },
-  header: {
-    padding: 20,
+  headerBar: {
+    backgroundColor: '#007AFF',
+    padding: 15,
+    paddingTop: 50,
+    flexDirection: 'row',
+    alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#e0e0e0',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
+  backButton: {
+    marginRight: 15,
   },
-  subtitle: {
+  headerText: {
+    color: '#fff',
     fontSize: 18,
-    color: '#666',
     fontWeight: 'bold',
   },
   content: {
@@ -260,18 +263,6 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 8,
     marginTop: 10,
-  },
-  backButton: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    margin: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  backButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
   modalContainer: {
     flex: 1,
