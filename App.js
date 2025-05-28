@@ -1,3 +1,4 @@
+import 'react-native-gesture-handler';
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -9,6 +10,9 @@ import DashboardScreen from './src/screens/DashboardScreen';
 import AnswerScreen from './src/screens/AnswerScreen';
 import ReviewScreen from './src/screens/ReviewScreen';
 import ChatScreen from './src/screens/ChatScreen';
+import ExamStatsList from './src/screens/ExamStatsList';
+import StatisticsScreen from './src/screens/StatisticsScreen';
+import ExamList from './src/screens/ExamList';
 
 //const { LogBox } = require('react-native');
 
@@ -47,6 +51,9 @@ const Navigation = () => {
           <Stack.Screen name="Answer" component={AnswerScreen} />
           <Stack.Screen name="Review" component={ReviewScreen} />
           <Stack.Screen name="Chat" component={ChatScreen} />
+          <Stack.Screen name="ExamStatsList" component={ExamStatsList} />
+          <Stack.Screen name="Statistics" component={StatisticsScreen} />
+          <Stack.Screen name="ExamList" component={ExamList} />
         </Stack.Group>
       )}
     </Stack.Navigator>
