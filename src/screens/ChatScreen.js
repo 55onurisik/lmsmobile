@@ -127,7 +127,7 @@ const ChatScreen = () => {
     if (!item?.id) return null;
 
     const messageIsMine = isMyMessage(item);
-    const senderName = item.sender_type === 'App\\Models\\Student' ? 'Öğrenci' : 'Admin';
+    const senderName = item.sender_type === 'App\\Models\\Student' ? 'Öğrenci' : 'Öğretmen';
     console.log('Rendering message:', item);
 
     return (
@@ -189,7 +189,7 @@ const ChatScreen = () => {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Admin ile Sohbet</Text>
+        <Text style={styles.headerTitle}>Öğretmen ile Sohbet</Text>
       </View>
 
       <FlatList
@@ -235,12 +235,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+    paddingTop: Platform.OS === 'ios' ? 50 : 0, // iPhone için üstten padding
   },
   header: {
     padding: 15,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
+    paddingTop: Platform.OS === 'ios' ? 20 : 15, // iPhone için header padding
   },
   headerTitle: {
     fontSize: 18,
@@ -248,56 +250,40 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#333',
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-  },
   messageList: {
-    padding: 10,
     flexGrow: 1,
+    padding: 10,
   },
   messageWrapper: {
-    marginVertical: 8,
+    marginVertical: 5,
   },
   messageContainer: {
-    maxWidth: '100%',
-    paddingHorizontal: 15,
-  },
-  messageBubble: {
-    padding: 12,
-    borderRadius: 10,
-    maxWidth: '70%',
+    maxWidth: '80%',
+    marginVertical: 2,
   },
   myMessage: {
-    alignItems: 'flex-end',
+    alignSelf: 'flex-end',
   },
   otherMessage: {
-    alignItems: 'flex-start',
+    alignSelf: 'flex-start',
+  },
+  senderName: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 2,
+  },
+  messageBubble: {
+    borderRadius: 20,
+    padding: 12,
+    marginVertical: 2,
   },
   myMessageBubble: {
     backgroundColor: '#007AFF',
+    borderBottomRightRadius: 5,
   },
   otherMessageBubble: {
-    backgroundColor: '#f8f9fa',
-  },
-  senderName: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 4,
-    color: '#333',
+    backgroundColor: '#E5E5EA',
+    borderBottomLeftRadius: 5,
   },
   messageText: {
     fontSize: 16,
@@ -310,35 +296,36 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   messageTime: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 4,
+    fontSize: 10,
+    color: '#999',
+    marginTop: 2,
+    alignSelf: 'flex-end',
   },
   inputContainer: {
     flexDirection: 'row',
     padding: 10,
     backgroundColor: '#fff',
     borderTopWidth: 1,
-    borderTopColor: '#ddd',
-    alignItems: 'center',
+    borderTopColor: '#eee',
+    paddingBottom: Platform.OS === 'ios' ? 30 : 10, // iPhone için alt padding
   },
   input: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 5,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 20,
     paddingHorizontal: 15,
     paddingVertical: 10,
     marginRight: 10,
     fontSize: 16,
+    maxHeight: 100,
   },
   sendButton: {
     backgroundColor: '#007AFF',
-    borderRadius: 5,
+    borderRadius: 20,
     paddingHorizontal: 20,
     paddingVertical: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    minWidth: 80,
   },
   sendButtonDisabled: {
     backgroundColor: '#ccc',
@@ -347,6 +334,17 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 50,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
   },
 });
 

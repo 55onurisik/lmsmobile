@@ -13,6 +13,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { useDashboard } from '../hooks/useDashboard';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 const DashboardScreen = ({ navigation }) => {
   const { logout } = useAuth();
@@ -55,6 +56,13 @@ const DashboardScreen = ({ navigation }) => {
             {student?.schedule_day} {student?.schedule_time}
           </Text>
         </View>
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={handleLogout}
+        >
+          <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
+          <Text style={styles.logoutText}>Çıkış Yap</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -117,19 +125,44 @@ const DashboardScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Profilim</Text>
-        <View style={styles.headerButtons}>
-          <TouchableOpacity 
-            onPress={() => navigation.navigate('Chat')} 
-            style={styles.chatButton}
-          >
-            <Ionicons name="chatbubble-ellipses" size={24} color="#007AFF" />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-            <Text style={styles.logoutText}>Çıkış Yap</Text>
-          </TouchableOpacity>
-        </View>
+      <View style={styles.headerBar}>
+        <TouchableOpacity
+          style={styles.menuButton}
+          onPress={() => navigation.openDrawer()}
+        >
+          <Ionicons name="menu" size={24} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerText}>Dashboard</Text>
+      </View>
+
+      <View style={styles.menuContainer}>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => navigation.navigate('Statistics')}
+        >
+          <Text style={styles.menuText}>İstatistikler</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => navigation.navigate('ExamStatsList')}
+        >
+          <Text style={styles.menuText}>Sınav İstatistikleri</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => navigation.navigate('ExamList')}
+        >
+          <Text style={styles.menuText}>Sonuçları Gör</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => navigation.navigate('Chat')}
+        >
+          <Text style={styles.menuText}>Sohbet</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content}>
@@ -152,49 +185,44 @@ const DashboardScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    paddingTop: Platform.OS === 'ios' ? 50 : 20,
+    backgroundColor: '#f5f5f5',
   },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  header: {
+  headerBar: {
+    backgroundColor: '#007AFF',
+    padding: 15,
+    paddingTop: 50,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#e0e0e0',
   },
-  title: {
-    fontSize: 24,
+  menuButton: {
+    marginRight: 15,
+  },
+  headerText: {
+    color: '#fff',
+    fontSize: 18,
     fontWeight: 'bold',
   },
-  headerButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 15,
+  menuContainer: {
+    padding: 20,
   },
-  chatButton: {
-    padding: 10,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#007AFF',
+  menuItem: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    marginBottom: 15,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
-  logoutButton: {
-    padding: 10,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#007AFF',
-  },
-  logoutText: {
-    color: '#007AFF',
+  menuText: {
     fontSize: 16,
     fontWeight: '600',
+    color: '#333',
+    textAlign: 'center',
   },
   content: {
     flex: 1,
@@ -284,6 +312,22 @@ const styles = StyleSheet.create({
     color: 'red',
     fontSize: 16,
     textAlign: 'center',
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 15,
+    padding: 10,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FF3B30',
+  },
+  logoutText: {
+    color: '#FF3B30',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

@@ -31,6 +31,16 @@ const ReviewScreen = ({ route, navigation }) => {
     });
   };
 
+  const getAnswerStatus = (isCorrect) => {
+    if (isCorrect === 2) return 'Boş';
+    return isCorrect === 1 ? 'Doğru' : 'Yanlış';
+  };
+
+  const getAnswerStyle = (isCorrect) => {
+    if (isCorrect === 2) return styles.emptyAnswer;
+    return isCorrect === 1 ? styles.correctAnswer : styles.incorrectAnswer;
+  };
+
   if (loading) {
     return <Spinner />;
   }
@@ -41,6 +51,13 @@ const ReviewScreen = ({ route, navigation }) => {
       onRetry={() => navigation.goBack()}
     />;
   }
+
+  // Sort answers by question number
+  const sortedAnswers = [...studentAnswers].sort((a, b) => {
+    const aNum = parseInt(a.answer_id);
+    const bNum = parseInt(b.answer_id);
+    return aNum - bNum;
+  });
 
   const toggleBroadcast = () => {
     navigation.setParams({
@@ -56,25 +73,25 @@ const ReviewScreen = ({ route, navigation }) => {
       </View>
 
       <ScrollView style={styles.content}>
-        {studentAnswers.map((answer) => (
+        {sortedAnswers.map((answer, index) => (
           <View key={answer.answer_id} style={styles.answerContainer}>
             <View style={styles.questionHeader}>
               <Text style={styles.questionNumber}>
-                {answer.answer_id}. Soru
+                {index + 1}. Soru
               </Text>
               <Text
                 style={[
                   styles.answerStatus,
-                  answer.is_correct ? styles.correct : styles.incorrect,
+                  getAnswerStyle(answer.is_correct)
                 ]}
               >
-                {answer.is_correct ? 'Doğru' : 'Yanlış'}
+                {getAnswerStatus(answer.is_correct)}
               </Text>
             </View>
 
             <View style={styles.answerContent}>
               <Text style={styles.answerText}>
-                Cevabınız: {answer.students_answer.toUpperCase()}
+                Cevabınız: {answer.students_answer?.toUpperCase() || 'Boş'}
               </Text>
               
               <TouchableOpacity 
@@ -283,6 +300,10 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  emptyAnswer: {
+    backgroundColor: '#6c757d',
+    color: '#fff',
   },
 });
 

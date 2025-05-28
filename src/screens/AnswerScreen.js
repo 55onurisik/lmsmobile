@@ -17,6 +17,7 @@ const AnswerScreen = ({ route, navigation }) => {
   const { exam, loading: questionsLoading, error: questionsError } = useExamQuestions(examId);
   const { submit, loading: submitLoading, error: submitError } = useSubmitAnswers(examId);
   const [answers, setAnswers] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const handleAnswer = useCallback((questionId, answer) => {
     setAnswers(prev => ({
@@ -25,51 +26,31 @@ const AnswerScreen = ({ route, navigation }) => {
     }));
   }, []);
 
-  const handleSubmit = useCallback(async () => {
-    if (!exam?.questions) {
-      Alert.alert('Hata', 'Sınav soruları yüklenemedi.');
-      return;
-    }
-
+  const handleSubmit = async () => {
     try {
-      // Check if all questions are answered
-      const unansweredQuestions = exam.questions.filter(q => !answers[q.id]);
-      if (unansweredQuestions.length > 0) {
-        Alert.alert(
-          'Eksik Cevaplar',
-          'Lütfen tüm soruları cevaplayın.',
-          [{ text: 'Tamam' }]
-        );
-        return;
-      }
-
-      // Convert answers to array format
-      const answersArray = Object.entries(answers).map(([questionId, answer]) => ({
-        question_id: parseInt(questionId),
-        selected_answer: answer.toUpperCase()
+      setLoading(true);
+      const answers = questions.map(q => ({
+        question_id: q.id,
+        selected_answer: q.selectedAnswer === 'Boş' ? null : q.selectedAnswer.toUpperCase()
       }));
 
-      const result = await submit(answersArray);
-      
-      if (result.success) {
-        Alert.alert(
-          'Başarılı',
-          'Cevaplarınız başarıyla kaydedildi.',
-          [
-            {
-              text: 'Tamam',
-              onPress: () => navigation.navigate('Dashboard')
-            }
-          ]
-        );
-      } else {
-        Alert.alert('Hata', result.error || 'Cevaplar kaydedilirken bir hata oluştu.');
+      const response = await client.post('/submit-answers', { answers });
+      if (response.data.success) {
+        navigation.navigate('Review', { 
+          examId: exam.id,
+          answers: response.data.answers.map(a => ({
+            ...a,
+            is_correct: a.selected_answer === null ? 2 : (a.is_correct ? 1 : 0)
+          }))
+        });
       }
     } catch (error) {
       console.error('Submit error:', error);
       Alert.alert('Hata', 'Cevaplar kaydedilirken bir hata oluştu.');
+    } finally {
+      setLoading(false);
     }
-  }, [answers, exam, submit, navigation]);
+  };
 
   if (questionsLoading) {
     return (
@@ -106,7 +87,7 @@ const AnswerScreen = ({ route, navigation }) => {
           </Text>
           
           <View style={styles.optionsContainer}>
-            {['A', 'B', 'C', 'D', 'E'].map((option) => (
+            {['A', 'B', 'C', 'D', 'E', 'Boş'].map((option) => (
               <TouchableOpacity
                 key={option}
                 style={[
@@ -174,10 +155,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     flexWrap: 'wrap',
+    gap: 4,
   },
   optionButton: {
-    width: '18%',
-    padding: 12,
+    width: '15.5%',
+    padding: 10,
     borderRadius: 8,
     backgroundColor: '#fff',
     borderWidth: 1,

@@ -13,23 +13,16 @@ import { useReview } from '../hooks/useReview';
 
 const AnswerItem = ({ item, isExpanded, onToggle }) => {
   const getStatusBadge = (isCorrect) => {
-    let text, color;
-    switch (isCorrect) {
-      case 1:
-        text = 'Doğru';
-        color = '#4CAF50';
-        break;
-      case 0:
-        text = 'Yanlış';
-        color = '#F44336';
-        break;
-      default:
-        text = 'Boş';
-        color = '#9E9E9E';
+    if (isCorrect === 2) {
+      return (
+        <View style={[styles.badge, styles.emptyBadge]}>
+          <Text style={styles.badgeText}>Boş</Text>
+        </View>
+      );
     }
     return (
-      <View style={[styles.badge, { backgroundColor: color }]}>
-        <Text style={styles.badgeText}>{text}</Text>
+      <View style={[styles.badge, isCorrect === 1 ? styles.correctBadge : styles.incorrectBadge]}>
+        <Text style={styles.badgeText}>{isCorrect === 1 ? 'Doğru' : 'Yanlış'}</Text>
       </View>
     );
   };
@@ -191,5 +184,14 @@ const styles = StyleSheet.create({
     height: 200,
     marginTop: 12,
     borderRadius: 6,
+  },
+  emptyBadge: {
+    backgroundColor: '#6c757d',
+  },
+  correctBadge: {
+    backgroundColor: '#4CAF50', // Doğru cevap için yeşil renk
+  },
+  incorrectBadge: {
+    backgroundColor: '#F44336', // Yanlış cevap için kırmızı renk
   },
 }); 
