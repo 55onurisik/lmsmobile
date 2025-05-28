@@ -25,7 +25,7 @@ export function CustomDrawerContent(props) {
       screen: 'Statistics',
     },
     {
-      title: 'Sınav İstatistikleri',
+      title: '',
       icon: 'bar-chart-outline',
       screen: 'ExamStatsList',
     },
