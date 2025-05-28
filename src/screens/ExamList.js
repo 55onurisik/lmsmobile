@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
   examItem: {
     backgroundColor: '#fff',
     padding: 15,
-    borderRadius: 8,
+    borderRadius: 24,
     marginBottom: 10,
     elevation: 2,
     shadowColor: '#000',

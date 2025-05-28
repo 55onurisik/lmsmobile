@@ -6,10 +6,13 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import { PieChart } from 'react-native-chart-kit';
 import client from '../api/client';
 import { Dimensions } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const ExamDetailScreen = ({ route, navigation }) => {
   const { exam } = route.params;
@@ -43,9 +46,11 @@ const ExamDetailScreen = ({ route, navigation }) => {
     }
   };
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchStats();
+    }, [exam.id])
+  );
 
   const renderTopicStats = () => {
     if (!stats?.topics) return null;
@@ -119,42 +124,46 @@ const ExamDetailScreen = ({ route, navigation }) => {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{exam.exam_title}</Text>
-        <Text style={styles.code}>Kod: {exam.exam_code}</Text>
+    <View style={styles.container}>
+      <View style={styles.headerBar}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.navigate('ExamList')}
+        >
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerText}>Sınav Detayı</Text>
       </View>
-
-      <View style={styles.infoContainer}>
-        <View style={styles.infoItem}>
-          <Text style={styles.infoLabel}>Soru Sayısı</Text>
-          <Text style={styles.infoValue}>{exam.question_count}</Text>
+      <ScrollView style={styles.scrollView}>
+        <View style={styles.header}>
+          <Text style={styles.title}>{exam.exam_title}</Text>
+          <Text style={styles.code}>Kod: {exam.exam_code}</Text>
         </View>
-      </View>
 
-      {stats && (
-        <>
-          <View style={styles.statsContainer}>
-            <Text style={styles.statsTitle}>Genel İstatistikler</Text>
-            <PieChart
-              data={pieData}
-              width={screenWidth - 40}
-              height={220}
-              chartConfig={chartConfig}
-              accessor="population"
-              backgroundColor="transparent"
-              paddingLeft="15"
-              absolute
-            />
-          </View>
+        {stats && (
+          <>
+            <View style={styles.statsContainer}>
+              <Text style={styles.statsTitle}>Genel İstatistikler</Text>
+              <PieChart
+                data={pieData}
+                width={screenWidth - 40}
+                height={220}
+                chartConfig={chartConfig}
+                accessor="population"
+                backgroundColor="transparent"
+                paddingLeft="15"
+                absolute
+              />
+            </View>
 
-          <View style={styles.topicsContainer}>
-            <Text style={styles.topicsTitle}>Konu Bazlı Performans</Text>
-            {renderTopicStats()}
-          </View>
-        </>
-      )}
-    </ScrollView>
+            <View style={styles.topicsContainer}>
+              <Text style={styles.topicsTitle}>Konu Bazlı Performans</Text>
+              {renderTopicStats()}
+            </View>
+          </>
+        )}
+      </ScrollView>
+    </View>
   );
 };
 
@@ -163,6 +172,26 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
+  headerBar: {
+    backgroundColor: '#007AFF',
+    padding: 15,
+    paddingTop: 50,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#007AFF',
+  },
+  backButton: {
+    marginRight: 15,
+  },
+  headerText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  scrollView: {
+    flex: 1,
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -170,19 +199,21 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: '#fff',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    padding: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: 'black',
     marginBottom: 8,
   },
   code: {
     fontSize: 16,
-    color: '#666',
+    color: 'black',
   },
   infoContainer: {
     flexDirection: 'row',
@@ -196,13 +227,13 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 14,
-    color: '#666',
+    color: '#fff',
     marginBottom: 4,
   },
   infoValue: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
   },
   statsContainer: {
     backgroundColor: '#fff',

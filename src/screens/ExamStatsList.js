@@ -7,11 +7,11 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Dimensions,
 } from 'react-native';
 import { PieChart } from 'react-native-chart-kit';
 import client from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
-import { Dimensions } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const ExamStatsList = ({ navigation }) => {
@@ -19,7 +19,6 @@ const ExamStatsList = ({ navigation }) => {
   const [statistics, setStatistics] = useState([]);
   const [loading, setLoading] = useState(true);
   const { isAuthenticated } = useAuth();
-  const screenWidth = Dimensions.get('window').width;
 
   const fetchData = async () => {
     try {
@@ -51,85 +50,64 @@ const ExamStatsList = ({ navigation }) => {
   };
 
   const renderExamItem = ({ item }) => {
-    const stats = statistics.find(st => st.exam_id === item.id);
-    const totalCorrect = stats?.topics.reduce((a, t) => a + (t.correct || 0), 0) || 0;
-    const totalIncorrect = stats?.topics.reduce((a, t) => a + (t.incorrect || 0), 0) || 0;
-    const totalEmpty = stats?.topics.reduce((a, t) => a + (t.unanswered || 0), 0) || 0;
-    const hasStats = totalCorrect > 0 || totalIncorrect > 0 || totalEmpty > 0;
+    const stats = statistics.find(st => st.exam_id === item.id) || { topics: [] };
+    const totalCorrect   = stats.topics.reduce((sum, t) => sum + (t.correct   || 0), 0);
+    const totalIncorrect = stats.topics.reduce((sum, t) => sum + (t.incorrect || 0), 0);
+    const totalEmpty     = stats.topics.reduce((sum, t) => sum + (t.unanswered|| 0), 0);
+    const hasStats = totalCorrect || totalIncorrect || totalEmpty;
 
-    const examPieData = [
-      {
-        name: 'Doğru',
-        population: totalCorrect,
-        color: '#28a745',
-        legendFontColor: '#7F7F7F',
-        legendFontSize: 12,
-      },
-      {
-        name: 'Yanlış',
-        population: totalIncorrect,
-        color: '#dc3545',
-        legendFontColor: '#7F7F7F',
-        legendFontSize: 12,
-      },
-      {
-        name: 'Boş',
-        population: totalEmpty,
-        color: '#6c757d',
-        legendFontColor: '#7F7F7F',
-        legendFontSize: 12,
-      },
+    const pieData = [
+      { name: 'Doğru',    population: totalCorrect,   color: '#28a745', legendFontColor: '#7F7F7F', legendFontSize: 12 },
+      { name: 'Yanlış',   population: totalIncorrect, color: '#dc3545', legendFontColor: '#7F7F7F', legendFontSize: 12 },
+      { name: 'Boş',      population: totalEmpty,     color: '#6c757d', legendFontColor: '#7F7F7F', legendFontSize: 12 },
     ];
 
     return (
       <TouchableOpacity
         style={[styles.examItem, !hasStats && styles.disabledExamItem]}
-        onPress={() =>
-          hasStats && navigation.navigate('StatisticsDetail', { exam: item, stats })
-        }
+        onPress={() => hasStats && navigation.navigate('StatisticsDetail', { exam: item, stats })}
         disabled={!hasStats}
       >
-        <View style={styles.examHeader}>
-          <Text style={[styles.examTitle, !hasStats && styles.disabledText]}>
+        <View style={styles.header}>
+          <Text style={[styles.title, !hasStats && styles.disabledText]}>
             {item.exam_title}
           </Text>
-          <Text style={[styles.examCode, !hasStats && styles.disabledText]}>
+          <Text style={[styles.code, !hasStats && styles.disabledText]}>
             Kod: {item.exam_code}
           </Text>
         </View>
+
         {hasStats && (
-          <View style={styles.examChartContainer}>
-            <PieChart
-              data={examPieData}
-              width={120}
-              height={120}
-              chartConfig={chartConfig}
-              accessor="population"
-              backgroundColor="transparent"
-              paddingLeft="0"
-              absolute
-            />
+          <View style={styles.statsContainer}>
+            <View style={styles.chartContainer}>
+              <PieChart
+                data={pieData}
+                width={100}
+                height={100}
+                chartConfig={chartConfig}
+                accessor="population"
+                backgroundColor="transparent"
+                hasLegend={false}
+                center={[15, 0]}
+                absolute
+              />
+            </View>
+            <View style={styles.numbers}>
+              <Text style={styles.correctText}>Doğru: {totalCorrect}</Text>
+              <Text style={styles.incorrectText}>Yanlış: {totalIncorrect}</Text>
+              <Text style={styles.emptyText}>Boş: {totalEmpty}</Text>
+            </View>
           </View>
         )}
-        <View style={styles.statsContainer}>
-          <Text style={[styles.correctText, !hasStats && styles.disabledText]}>
-            Doğru: {totalCorrect}
-          </Text>
-          <Text style={[styles.incorrectText, !hasStats && styles.disabledText]}>
-            Yanlış: {totalIncorrect}
-          </Text>
-          <Text style={[styles.emptyText, !hasStats && styles.disabledText]}>
-            Boş: {totalEmpty}
-          </Text>
-        </View>
-        {!hasStats && <Text style={styles.notSolvedText}>Henüz çözülmedi</Text>}
+
+        {!hasStats && <Text style={styles.notSolved}>Henüz çözülmedi</Text>}
       </TouchableOpacity>
     );
   };
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={styles.loading}>
         <ActivityIndicator size="large" color="#007AFF" />
       </View>
     );
@@ -137,19 +115,17 @@ const ExamStatsList = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerBar}>
-        <TouchableOpacity
-          style={styles.menuButton}
-          onPress={() => navigation.openDrawer()}
-        >
+      <View style={styles.topBar}>
+        <TouchableOpacity onPress={() => navigation.openDrawer()} style={styles.menu}>
           <Ionicons name="menu" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerText}>Sınav İstatistikleri</Text>
+        <Text style={styles.topBarTitle}>Sınav İstatistikleri</Text>
       </View>
+
       <FlatList
         data={exams}
         renderItem={renderExamItem}
-        keyExtractor={item => item.id.toString()}
+        keyExtractor={i => i.id.toString()}
         contentContainerStyle={styles.list}
       />
     </View>
@@ -157,93 +133,55 @@ const ExamStatsList = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  headerBar: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    paddingTop: 50,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  menuButton: {
-    marginRight: 15,
-  },
-  headerText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  list: {
-    padding: 15,
-  },
+  container:        { flex: 1, backgroundColor: '#f5f5f5' },
+  topBar:           { backgroundColor: '#007AFF', paddingTop: 50, padding: 15, flexDirection: 'row', alignItems: 'center' },
+  menu:             { marginRight: 5 },
+  topBarTitle:      { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  loading:          { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  list:             { padding: 15 },
+
   examItem: {
     backgroundColor: '#fff',
     padding: 15,
-    borderRadius: 8,
     marginBottom: 10,
+    borderRadius: 24,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 2,
   },
-  examHeader: {
-    marginBottom: 8,
-  },
-  examTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  examCode: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
-  examChartContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: 10,
-  },
+  disabledExamItem: { opacity: 0.5 },
+
+  header:           { marginBottom: 10 },
+  title:            { fontSize: 18, fontWeight: 'bold', color: '#333' },
+  code:             { fontSize: 14, color: '#666', marginTop: 4 },
+  disabledText:     { color: '#aaa' },
+
   statsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
+    alignItems: 'flex-start',
+    paddingVertical: 10,
+    paddingHorizontal: 5,
   },
-  correctText: {
-    color: '#28a745',
+  chartContainer: {
+    width: 80,
+    height: 80,
     marginRight: 15,
+    borderRadius: 24,
   },
-  incorrectText: {
-    color: '#dc3545',
-    marginRight: 15,
+  numbers: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingTop: 5,
   },
-  emptyText: {
-    color: '#6c757d',
-  },
-  disabledExamItem: {
-    opacity: 0.6,
-    backgroundColor: '#e9ecef',
-  },
-  disabledText: {
-    color: '#6c757d',
-  },
-  notSolvedText: {
-    color: '#6c757d',
-    fontSize: 12,
-    fontStyle: 'italic',
-    marginTop: 4,
-  },
+
+  correctText:      { color: '#28a745', fontSize: 16, marginBottom: 4 },
+  incorrectText:    { color: '#dc3545', fontSize: 16, marginBottom: 4 },
+  emptyText:        { color: '#6c757d', fontSize: 16 },
+
+  notSolved:        { fontStyle: 'italic', color: '#999', marginTop: 8 },
 });
 
-export default ExamStatsList; 
+
+export default ExamStatsList;

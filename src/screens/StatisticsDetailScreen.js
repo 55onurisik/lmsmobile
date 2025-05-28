@@ -111,9 +111,11 @@ const styles = StyleSheet.create({
   },
   chartContainer: {
     backgroundColor: '#fff',
-    margin: 10,
     padding: 15,
-    borderRadius: 10,
+    margin: 10,
+    marginTop: 20,
+    marginBottom: 20,
+    borderRadius: 24,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -127,11 +129,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   topicsContainer: {
-    flex: 1,
     backgroundColor: '#fff',
-    margin: 10,
     padding: 15,
-    borderRadius: 10,
+    margin: 10,
+    marginTop: 20,
+    marginBottom: 20,
+    borderRadius: 24,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -149,8 +152,13 @@ const styles = StyleSheet.create({
   topicItem: {
     backgroundColor: '#f8f9fa',
     padding: 15,
-    borderRadius: 8,
+    borderRadius: 24,
     marginBottom: 8,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   topicName: {
     fontSize: 16,
@@ -167,6 +175,11 @@ const styles = StyleSheet.create({
   },
   incorrectText: {
     color: '#dc3545',
+  },
+  chart: {
+    marginVertical: 5,
+    borderRadius: 24,
+    marginLeft: -15,
   },
 });
 

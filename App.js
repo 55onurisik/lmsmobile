@@ -18,10 +18,9 @@ import StatisticsScreen from './src/screens/StatisticsScreen';
 import ExamList from './src/screens/ExamList';
 import ExamDetailScreen from './src/screens/ExamDetailScreen';
 
-//const { LogBox } = require('react-native');
+const { LogBox } = require('react-native');
 
-// tüm warning'leri gizle
-//LogBox.ignoreAllLogs();
+LogBox.ignoreAllLogs();
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();

@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     padding: 16,
     backgroundColor: '#f8f9fa',
-    borderRadius: 8,
+    borderRadius: 24,
   },
   questionText: {
     fontSize: 16,
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
   optionButton: {
     width: '15.5%',
     padding: 10,
-    borderRadius: 8,
+    borderRadius: 24,
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: '#dee2e6',
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
   submitButton: {
     backgroundColor: '#28a745',
     padding: 16,
-    borderRadius: 8,
+    borderRadius: 24,
     alignItems: 'center',
     marginTop: 24,
     marginBottom: 32,
