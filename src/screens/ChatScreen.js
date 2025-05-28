@@ -13,8 +13,9 @@ import {
 } from 'react-native';
 import client from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
-const ChatScreen = () => {
+const ChatScreen = ({ navigation }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -189,6 +190,12 @@ const ChatScreen = () => {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
       <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.menuButton}
+          onPress={() => navigation.openDrawer()}
+        >
+          <Ionicons name="menu" size={24} color="#333" />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Öğretmen ile Sohbet</Text>
       </View>
 
@@ -243,6 +250,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
     paddingTop: Platform.OS === 'ios' ? 20 : 15, // iPhone için header padding
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  menuButton: {
+    marginRight: 15,
   },
   headerTitle: {
     fontSize: 18,

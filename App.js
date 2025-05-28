@@ -39,6 +39,13 @@ function DrawerNavigator() {
       }}
     >
       <Drawer.Screen name="Dashboard" component={DashboardScreen} />
+      <Drawer.Screen name="Answer" component={AnswerScreen} />
+      <Drawer.Screen name="Review" component={ReviewScreen} />
+      <Drawer.Screen name="Chat" component={ChatScreen} />
+      <Drawer.Screen name="ExamStatsList" component={ExamStatsList} />
+      <Drawer.Screen name="Statistics" component={StatisticsScreen} />
+      <Drawer.Screen name="ExamList" component={ExamList} />
+      <Drawer.Screen name="ExamDetail" component={ExamDetailScreen} />
     </Drawer.Navigator>
   );
 }
@@ -62,13 +69,6 @@ const Navigation = () => {
       ) : (
         <Stack.Group>
           <Stack.Screen name="MainDrawer" component={DrawerNavigator} />
-          <Stack.Screen name="Answer" component={AnswerScreen} />
-          <Stack.Screen name="Review" component={ReviewScreen} />
-          <Stack.Screen name="Chat" component={ChatScreen} />
-          <Stack.Screen name="ExamStatsList" component={ExamStatsList} />
-          <Stack.Screen name="Statistics" component={StatisticsScreen} />
-          <Stack.Screen name="ExamList" component={ExamList} />
-          <Stack.Screen name="ExamDetail" component={ExamDetailScreen} />
         </Stack.Group>
       )}
     </Stack.Navigator>

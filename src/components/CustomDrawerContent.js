@@ -14,6 +14,11 @@ export function CustomDrawerContent(props) {
 
   const menuItems = [
     {
+      title: 'Ana Sayfa',
+      icon: 'home-outline',
+      screen: 'Dashboard',
+    },
+    {
       title: 'Genel İstatistikler',
       icon: 'stats-chart-outline',
       screen: 'Statistics',
@@ -57,23 +62,20 @@ export function CustomDrawerContent(props) {
         {menuItems.map((item, index) => (
           <TouchableOpacity
             key={index}
-            style={styles.menuItem}
-            onPress={() => {
-              props.navigation.navigate(item.screen);
-              props.navigation.closeDrawer();
-            }}
+            style={styles.drawerItem}
+            onPress={() => props.navigation.navigate(item.screen)}
           >
-            <Ionicons name={item.icon} size={24} color="#007AFF" />
-            <Text style={styles.menuText}>{item.title}</Text>
+            <Ionicons name={item.icon} size={24} color="#333" style={styles.icon} />
+            <Text style={styles.drawerItemText}>{item.title}</Text>
           </TouchableOpacity>
         ))}
 
         <TouchableOpacity
-          style={styles.logoutButton}
+          style={styles.drawerItem}
           onPress={handleLogout}
         >
-          <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
-          <Text style={styles.logoutText}>Çıkış Yap</Text>
+          <Ionicons name="log-out-outline" size={24} color="#333" style={styles.icon} />
+          <Text style={styles.drawerItemText}>Çıkış Yap</Text>
         </TouchableOpacity>
       </View>
     </DrawerContentScrollView>
@@ -95,29 +97,18 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
   },
-  menuItem: {
+  drawerItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
-  menuText: {
+  icon: {
+    marginRight: 15,
+  },
+  drawerItemText: {
     fontSize: 16,
-    marginLeft: 15,
     color: '#333',
-  },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-    marginTop: 'auto',
-  },
-  logoutText: {
-    fontSize: 16,
-    marginLeft: 15,
-    color: '#FF3B30',
   },
 }); 

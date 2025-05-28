@@ -12,6 +12,7 @@ import { PieChart } from 'react-native-chart-kit';
 import client from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
 import { Dimensions } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const ExamStatsList = ({ navigation }) => {
   const [exams, setExams] = useState([]);
@@ -137,6 +138,12 @@ const ExamStatsList = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <View style={styles.headerBar}>
+        <TouchableOpacity
+          style={styles.menuButton}
+          onPress={() => navigation.openDrawer()}
+        >
+          <Ionicons name="menu" size={24} color="#fff" />
+        </TouchableOpacity>
         <Text style={styles.headerText}>Sınav İstatistikleri</Text>
       </View>
       <FlatList
@@ -158,9 +165,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#007AFF',
     padding: 15,
     paddingTop: 50,
+    flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
+  },
+  menuButton: {
+    marginRight: 15,
   },
   headerText: {
     color: '#fff',

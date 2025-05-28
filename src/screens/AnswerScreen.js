@@ -12,6 +12,7 @@ import { RadioButton } from 'react-native-paper';
 import { useExamQuestions } from '../hooks/useExamQuestions';
 import { useSubmitAnswers } from '../hooks/useSubmitAnswers';
 import client from '../api/client';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const AnswerScreen = ({ route, navigation }) => {
   const { examId } = route.params;
@@ -30,24 +31,42 @@ const AnswerScreen = ({ route, navigation }) => {
   const handleSubmit = async () => {
     try {
       setLoading(true);
-      const formattedAnswers = exam.questions.map(q => ({
-        question_id: q.id,
-        selected_answer: answers[q.id] === 'Boş' ? null : answers[q.id].toUpperCase()
-      }));
+      const formattedAnswers = {};
+      
+      exam.questions.forEach(q => {
+        formattedAnswers[q.id] = answers[q.id] === 'Boş' ? null : answers[q.id];
+      });
 
-      const response = await client.post('/submit', { answers: formattedAnswers });
-      if (response.data.success) {
-        navigation.navigate('Review', { 
-          examId: exam.id,
-          answers: response.data.answers.map(a => ({
-            ...a,
-            is_correct: a.selected_answer === null ? 2 : (a.is_correct ? 1 : 0)
-          }))
-        });
-      }
+      await client.post(`/exams/${examId}/submit`, { answers: formattedAnswers });
+      
+      Alert.alert(
+        'Başarılı',
+        'Cevaplarınız kaydedildi.',
+        [
+          {
+            text: 'Tamam',
+            onPress: () => navigation.reset({
+              index: 0,
+              routes: [{ name: 'MainDrawer' }],
+            })
+          }
+        ]
+      );
     } catch (error) {
       console.error('Submit error:', error);
-      Alert.alert('Hata', 'Cevaplar kaydedilirken bir hata oluştu.');
+      Alert.alert(
+        'Hata',
+        'Cevaplar kaydedilirken bir hata oluştu.',
+        [
+          {
+            text: 'Tamam',
+            onPress: () => navigation.reset({
+              index: 0,
+              routes: [{ name: 'MainDrawer' }],
+            })
+          }
+        ]
+      );
     } finally {
       setLoading(false);
     }
@@ -78,57 +97,89 @@ const AnswerScreen = ({ route, navigation }) => {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>{exam.title}</Text>
-      
-      {exam.questions.map((question, index) => (
-        <View key={question.id} style={styles.questionContainer}>
-          <Text style={styles.questionText}>
-            {index + 1}. {question.question_text}
-          </Text>
-          
-          <View style={styles.optionsContainer}>
-            {['A', 'B', 'C', 'D', 'E', 'Boş'].map((option) => (
-              <TouchableOpacity
-                key={option}
-                style={[
-                  styles.optionButton,
-                  answers[question.id] === option && styles.selectedOption
-                ]}
-                onPress={() => handleAnswer(question.id, option)}
-              >
-                <Text style={[
-                  styles.optionText,
-                  answers[question.id] === option && styles.selectedOptionText
-                ]}>
-                  {option}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-      ))}
+    <View style={styles.container}>
+      <View style={styles.headerBar}>
+        <TouchableOpacity
+          style={styles.menuButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerText}>Sınav</Text>
+      </View>
 
-      <TouchableOpacity
-        style={[styles.submitButton, submitLoading && styles.disabledButton]}
-        onPress={handleSubmit}
-        disabled={submitLoading}
-      >
-        {submitLoading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.submitButtonText}>Sınavı Tamamla</Text>
-        )}
-      </TouchableOpacity>
-    </ScrollView>
+      <ScrollView style={styles.content}>
+        <Text style={styles.title}>{exam.title}</Text>
+        
+        {exam.questions.map((question, index) => (
+          <View key={question.id} style={styles.questionContainer}>
+            <Text style={styles.questionText}>
+              {index + 1}. {question.question_text}
+            </Text>
+            
+            <View style={styles.optionsContainer}>
+              {['A', 'B', 'C', 'D', 'E', 'Boş'].map((option) => (
+                <TouchableOpacity
+                  key={option}
+                  style={[
+                    styles.optionButton,
+                    answers[question.id] === option && styles.selectedOption
+                  ]}
+                  onPress={() => handleAnswer(question.id, option)}
+                >
+                  <Text style={[
+                    styles.optionText,
+                    answers[question.id] === option && styles.selectedOptionText
+                  ]}>
+                    {option}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        ))}
+
+        <TouchableOpacity
+          style={[styles.submitButton, submitLoading && styles.disabledButton]}
+          onPress={handleSubmit}
+          disabled={submitLoading}
+        >
+          {submitLoading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.submitButtonText}>Sınavı Tamamla</Text>
+          )}
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  headerBar: {
+    backgroundColor: '#007AFF',
+    padding: 15,
+    paddingTop: 50,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  menuButton: {
+    marginRight: 15,
+  },
+  headerText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  content: {
+    flex: 1,
     padding: 16,
-    backgroundColor: '#fff',
   },
   centered: {
     flex: 1,
@@ -201,4 +252,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AnswerScreen; 
+export default AnswerScreen;
