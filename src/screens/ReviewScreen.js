@@ -107,21 +107,7 @@ const ReviewScreen = ({ route, navigation }) => {
                 <View style={styles.reviewContainer}>
                   <Text style={styles.reviewLabel}>Yorum:</Text>
                   <Text style={styles.reviewText}>{answer.review_text}</Text>
-                  {answer.review_media && (
-                    <>
-                      <TouchableOpacity 
-                        style={styles.viewImageButton}
-                        onPress={() => setSelectedImage(answer.review_media)}
-                      >
-                        <Text style={styles.viewImageButtonText}>Resmi Görüntüle</Text>
-                      </TouchableOpacity>
-                      <Image
-                        source={{ uri: answer.review_media }}
-                        style={styles.reviewImage}
-                        resizeMode="contain"
-                      />
-                    </>
-                  )}
+                  
                 </View>
               )}
             </View>
