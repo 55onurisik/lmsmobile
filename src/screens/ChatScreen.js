@@ -27,9 +27,8 @@ const ChatScreen = ({ navigation }) => {
     try {
       const response = await client.get('/chat');
       console.log('Fetched messages:', response.data);
-      
+
       if (response.data?.success && Array.isArray(response.data.messages)) {
-        // ID'si olmayan mesajları filtrele
         const validMessages = response.data.messages.filter(msg => msg?.id != null);
         setMessages(validMessages);
       } else {
@@ -37,7 +36,6 @@ const ChatScreen = ({ navigation }) => {
       }
     } catch (error) {
       console.error('Fetch error:', error);
-      // Polling sırasında hata olursa sessizce devam et
       if (loading) {
         Alert.alert('Hata', 'Mesajlar yüklenirken bir hata oluştu.');
       }
@@ -46,14 +44,10 @@ const ChatScreen = ({ navigation }) => {
     }
   };
 
-  // Polling için useEffect
   useEffect(() => {
     if (isAuthenticated) {
-      fetchMessages(); // İlk yükleme
-
-      const interval = setInterval(fetchMessages, 1000); // 5 saniyede bir güncelle
-      
-      // Component unmount olduğunda interval'i temizle
+      fetchMessages();
+      const interval = setInterval(fetchMessages, 1000);
       return () => clearInterval(interval);
     }
   }, [isAuthenticated]);
@@ -62,7 +56,6 @@ const ChatScreen = ({ navigation }) => {
     const messageText = newMessage.trim();
     if (!messageText || sending) return;
 
-    // Optimistic update için yeni mesaj objesi
     const optimisticMessage = {
       id: Date.now(),
       message: messageText,
@@ -75,13 +68,10 @@ const ChatScreen = ({ navigation }) => {
 
     try {
       setSending(true);
-      
-      // Önce mesajı state'e ekle
-      setMessages(prevMessages => [...prevMessages, optimisticMessage]);
-      setNewMessage(''); // Input'u temizle
+      setMessages(prev => [...prev, optimisticMessage]);
+      setNewMessage('');
       flatListRef.current?.scrollToEnd({ animated: true });
 
-      // Sonra API'ye gönder
       const response = await client.post('/chat/send', {
         message: messageText,
         receiver_id: 1,
@@ -92,10 +82,9 @@ const ChatScreen = ({ navigation }) => {
       console.log('Send response:', response.data);
 
       if (response.data?.success && response.data.id) {
-        // API yanıtı başarılıysa, geçici mesajı güncelle
-        setMessages(prevMessages => 
-          prevMessages.map(msg => 
-            msg.id === optimisticMessage.id 
+        setMessages(prev =>
+          prev.map(msg =>
+            msg.id === optimisticMessage.id
               ? { ...msg, id: response.data.id }
               : msg
           )
@@ -104,50 +93,37 @@ const ChatScreen = ({ navigation }) => {
     } catch (error) {
       console.error('Send error:', error);
       Alert.alert('Hata', 'Mesaj gönderilirken bir hata oluştu.');
-      
-      // Hata durumunda geçici mesajı kaldır
-      setMessages(prevMessages => 
-        prevMessages.filter(msg => msg.id !== optimisticMessage.id)
-      );
-      
-      // Mesajı input'a geri koy
+      setMessages(prev => prev.filter(msg => msg.id !== optimisticMessage.id));
       setNewMessage(messageText);
     } finally {
       setSending(false);
     }
   };
 
-  const isMyMessage = (message) => {
-    return (
-      message?.sender_type === 'App\\Models\\Student' &&
-      message?.sender_id === authStudent?.id
-    );
-  };
+  // Sadece sender_type'a bakarak öğrencinin mesajını sağa yasla
+  const isMyMessage = message =>
+    message?.sender_type === 'App\\Models\\Student';
 
-  const renderMessage = ({ item, index }) => {
+  const renderMessage = ({ item }) => {
     if (!item?.id) return null;
 
     const messageIsMine = isMyMessage(item);
     const senderName = item.sender_type === 'App\\Models\\Student' ? 'Öğrenci' : 'Öğretmen';
-    console.log('Rendering message:', item);
 
     return (
-      <View style={styles.messageWrapper}>
-        <View style={[
-          styles.messageContainer,
-          messageIsMine ? styles.myMessage : styles.otherMessage,
-        ]}>
-          <Text style={styles.senderName}>
-            {senderName}:
-          </Text>
-          <View style={[
-            styles.messageBubble,
-            messageIsMine ? styles.myMessageBubble : styles.otherMessageBubble
-          ]}>
-            <Text 
+      <View style={[styles.messageWrapper, messageIsMine ? styles.myMessage : styles.otherMessage]}>
+        <View style={styles.messageContainer}>
+          <Text style={styles.senderName}>{senderName}:</Text>
+          <View
+            style={[
+              styles.messageBubble,
+              messageIsMine ? styles.myMessageBubble : styles.otherMessageBubble,
+            ]}
+          >
+            <Text
               style={[
                 styles.messageText,
-                messageIsMine ? styles.myMessageText : styles.otherMessageText
+                messageIsMine ? styles.myMessageText : styles.otherMessageText,
               ]}
               numberOfLines={0}
             >
@@ -155,13 +131,15 @@ const ChatScreen = ({ navigation }) => {
             </Text>
           </View>
           <Text style={styles.messageTime}>
-            {item.created_at ? new Date(item.created_at).toLocaleString('tr-TR', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            }) : ''}
+            {item.created_at
+              ? new Date(item.created_at).toLocaleString('tr-TR', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
+              : ''}
           </Text>
         </View>
       </View>
@@ -190,10 +168,7 @@ const ChatScreen = ({ navigation }) => {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.menuButton}
-          onPress={() => navigation.openDrawer()}
-        >
+        <TouchableOpacity style={styles.menuButton} onPress={() => navigation.openDrawer()}>
           <Ionicons name="menu" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Öğretmen ile Sohbet</Text>
@@ -220,10 +195,7 @@ const ChatScreen = ({ navigation }) => {
           editable={!sending}
         />
         <TouchableOpacity
-          style={[
-            styles.sendButton,
-            (!newMessage.trim() || sending) && styles.sendButtonDisabled
-          ]}
+          style={[styles.sendButton, (!newMessage.trim() || sending) && styles.sendButtonDisabled]}
           onPress={sendMessage}
           disabled={!newMessage.trim() || sending}
         >
@@ -242,14 +214,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
-    paddingTop: Platform.OS === 'ios' ? 50 : 0, // iPhone için üstten padding
+    paddingTop: Platform.OS === 'ios' ? 50 : 0,
   },
   header: {
     padding: 15,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
-    paddingTop: Platform.OS === 'ios' ? 20 : 15, // iPhone için header padding
+    paddingTop: Platform.OS === 'ios' ? 20 : 15,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -269,15 +241,15 @@ const styles = StyleSheet.create({
   messageWrapper: {
     marginVertical: 5,
   },
-  messageContainer: {
-    maxWidth: '80%',
-    marginVertical: 2,
-  },
   myMessage: {
     alignSelf: 'flex-end',
   },
   otherMessage: {
     alignSelf: 'flex-start',
+  },
+  messageContainer: {
+    maxWidth: '80%',
+    marginVertical: 2,
   },
   senderName: {
     fontSize: 12,
@@ -319,7 +291,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopWidth: 1,
     borderTopColor: '#eee',
-    paddingBottom: Platform.OS === 'ios' ? 30 : 10, // iPhone için alt padding
+    paddingBottom: Platform.OS === 'ios' ? 30 : 10,
   },
   input: {
     flex: 1,
@@ -360,4 +332,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ChatScreen; 
+export default ChatScreen;
