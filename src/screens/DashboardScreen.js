@@ -146,7 +146,7 @@ const DashboardScreen = ({ navigation }) => {
         >
           <Ionicons name="menu" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerText}>Dashboard</Text>
+        <Text style={styles.headerText}>Ana Sayfa</Text>
       </View>
 
       <ScrollView 

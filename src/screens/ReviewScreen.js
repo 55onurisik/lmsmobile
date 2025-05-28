@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -14,15 +14,34 @@ import { useAuth } from '../contexts/AuthContext';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Spinner from '../components/Spinner';
 import ErrorAlert from '../components/ErrorAlert';
+import { useFocusEffect } from '@react-navigation/native';
 
 const ReviewScreen = ({ route, navigation }) => {
   const { examId, broadcast } = route.params;
-  const { exam, studentAnswers, loading, error } = useReview(examId, broadcast);
+  const { exam, studentAnswers, loading, error, checkReviewVisibility, fetchReview } = useReview(examId, broadcast);
   const { isAuthenticated } = useAuth();
   const [expandedAnswers, setExpandedAnswers] = useState(new Set());
   const [selectedImage, setSelectedImage] = useState(null);
 
-  const toggleAnswer = (answerId) => {
+  const refreshData = useCallback(() => {
+    if (isAuthenticated) {
+      fetchReview();
+    }
+  }, [isAuthenticated]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      refreshData();
+    }, [refreshData])
+  );
+
+  const toggleAnswer = async (answerId) => {
+    const isVisible = await checkReviewVisibility(answerId);
+    if (!isVisible) {
+      // Eğer inceleme görünür değilse, genişletmeyi engelle
+      return;
+    }
+    
     setExpandedAnswers(prev => {
       const newSet = new Set(prev);
       if (newSet.has(answerId)) {
