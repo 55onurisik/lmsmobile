@@ -34,7 +34,7 @@ const HomeScreen = () => {
           style={styles.menuItem}
           onPress={() => navigation.navigate('Statistics')}
         >
-          <Text style={styles.menuText}>İstatistikler</Text>
+          <Text style={styles.menuText}>Genel İstatistikler</Text>
         </TouchableOpacity>
 
         <TouchableOpacity

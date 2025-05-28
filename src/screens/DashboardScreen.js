@@ -135,35 +135,7 @@ const DashboardScreen = ({ navigation }) => {
         <Text style={styles.headerText}>Dashboard</Text>
       </View>
 
-      <View style={styles.menuContainer}>
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => navigation.navigate('Statistics')}
-        >
-          <Text style={styles.menuText}>İstatistikler</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => navigation.navigate('ExamStatsList')}
-        >
-          <Text style={styles.menuText}>Sınav İstatistikleri</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => navigation.navigate('ExamList')}
-        >
-          <Text style={styles.menuText}>Sonuçları Gör</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => navigation.navigate('Chat')}
-        >
-          <Text style={styles.menuText}>Sohbet</Text>
-        </TouchableOpacity>
-      </View>
+      
 
       <ScrollView style={styles.content}>
         {renderStudentCard()}

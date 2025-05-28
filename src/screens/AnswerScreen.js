@@ -11,6 +11,7 @@ import {
 import { RadioButton } from 'react-native-paper';
 import { useExamQuestions } from '../hooks/useExamQuestions';
 import { useSubmitAnswers } from '../hooks/useSubmitAnswers';
+import client from '../api/client';
 
 const AnswerScreen = ({ route, navigation }) => {
   const { examId } = route.params;
@@ -29,12 +30,12 @@ const AnswerScreen = ({ route, navigation }) => {
   const handleSubmit = async () => {
     try {
       setLoading(true);
-      const answers = questions.map(q => ({
+      const formattedAnswers = exam.questions.map(q => ({
         question_id: q.id,
-        selected_answer: q.selectedAnswer === 'Boş' ? null : q.selectedAnswer.toUpperCase()
+        selected_answer: answers[q.id] === 'Boş' ? null : answers[q.id].toUpperCase()
       }));
 
-      const response = await client.post('/submit-answers', { answers });
+      const response = await client.post('/submit', { answers: formattedAnswers });
       if (response.data.success) {
         navigation.navigate('Review', { 
           examId: exam.id,

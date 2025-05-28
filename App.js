@@ -2,8 +2,10 @@ import 'react-native-gesture-handler';
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createDrawerNavigator } from '@react-navigation/drawer';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import * as ReactNative from 'react-native';
+import { CustomDrawerContent } from './src/components/CustomDrawerContent';
 
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
@@ -22,6 +24,24 @@ import ExamDetailScreen from './src/screens/ExamDetailScreen';
 //LogBox.ignoreAllLogs();
 
 const Stack = createNativeStackNavigator();
+const Drawer = createDrawerNavigator();
+
+function DrawerNavigator() {
+  return (
+    <Drawer.Navigator
+      drawerContent={(props) => <CustomDrawerContent {...props} />}
+      screenOptions={{
+        headerShown: false,
+        drawerType: 'front',
+        drawerStyle: {
+          width: '75%',
+        },
+      }}
+    >
+      <Drawer.Screen name="Dashboard" component={DashboardScreen} />
+    </Drawer.Navigator>
+  );
+}
 
 const Navigation = () => {
   const { isAuthenticated, loading } = useAuth();
@@ -41,7 +61,7 @@ const Navigation = () => {
         </>
       ) : (
         <Stack.Group>
-          <Stack.Screen name="Dashboard" component={DashboardScreen} />
+          <Stack.Screen name="MainDrawer" component={DrawerNavigator} />
           <Stack.Screen name="Answer" component={AnswerScreen} />
           <Stack.Screen name="Review" component={ReviewScreen} />
           <Stack.Screen name="Chat" component={ChatScreen} />
